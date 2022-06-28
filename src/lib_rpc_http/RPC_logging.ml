@@ -65,9 +65,9 @@ let wrap_lwt f a = Lwt.dont_wait (fun () -> f a) raise
 (** Avoid calling emit, if sinks would ignore the message anyway. *)
 let if_level_appropriate_or_else ~level if_so if_not fmt =
   let lwt_level =
-    Lwt_log_core.Section.level @@ Internal_event.Section.to_lwt_log section
+    Tz_log_core.Log_core.Section.level @@ Internal_event.Section.to_lc_section section
   in
-  if Internal_event.Level.to_lwt_log level >= lwt_level then if_so fmt
+  if Internal_event.Level.to_lc_level level >= lwt_level then if_so fmt
   else if_not fmt
 
 let log level fmt =

@@ -1,0 +1,4 @@
+(library
+ (name tz_log_core_lwt)
+ (public_name tezos-event-logging.lwt)
+ (libraries tz_log_core lwt))

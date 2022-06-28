@@ -35,12 +35,13 @@
 *)
 
 open Tezos_error_monad
+open Tz_log_core
 open Error_monad
 
 (** {3 Events Definitions and Registration } *)
 
 (** The relative importance of a particular event (compatible with
-    traditional logging systems, cf. {!Lwt_log_core.level}). *)
+    traditional logging systems, cf. {!Log_core.level}). *)
 type level = Debug | Info | Notice | Warning | Error | Fatal
 
 (** Module to manipulate values of type {!level}.  *)
@@ -51,8 +52,8 @@ module Level : sig
   (** The default level is {!Info}. *)
   val default : t
 
-  (** Cast the level to a value of {!Lwt_log_core.level}. *)
-  val to_lwt_log : t -> Lwt_log_core.level
+  (** Cast the level to a value of {!Log_core.level}. *)
+  val to_lc_level : t -> Log_core.level
 
   val to_string : t -> string
 
@@ -74,7 +75,7 @@ module Section : sig
   val make_sanitized : string list -> t
 
   (** Make the equivalent {!Lwt_log} section.  *)
-  val to_lwt_log : t -> Lwt_log_core.section
+  val to_lc_section : t -> Log_core.section
 
   (** [is_prefix ~prefix p] checks that [p] starts with [~prefix].  *)
   val is_prefix : prefix:t -> t -> bool
@@ -609,7 +610,7 @@ end
 (** {3 Common Event-Sink Definitions } *)
 
 (** The lwt-sink outputs pretty-printed renderings of events to the
-    lwt-log logging framework (see the {!Lwt_log_core} module).
+    lwt-log logging framework (see the {!Log_core} module).
 
     It is activated {i by default} in {!Internal_event_unix.Configuration.default}
     (in any case it can be activated with [TEZOS_EVENTS_CONFIG="lwt-log://"]. To

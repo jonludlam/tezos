@@ -19,6 +19,8 @@
   tezos-clic
   tezos-micheline
   tezos-event-logging
+  tezos-event-logging.core
+  tezos-event-logging.lwt
   ptime
   ptime.clock.os
   ezjsonm

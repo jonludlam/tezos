@@ -31,7 +31,7 @@ module Output = struct
     | Stdout
     | Stderr
     | File of string
-    | Syslog of Lwt_log.syslog_facility
+    | Syslog of Tz_log_core_lwt.Lwt_log_tz.syslog_facility
 
   let to_string : t -> string = function
     | Null -> "/dev/null"
@@ -116,7 +116,7 @@ type cfg = {
   output : Output.t;
   default_level : Internal_event.level;
   rules : string option;
-  template : Lwt_log_core.template;
+  template : Tz_log_core.Log_core.template;
 }
 
 let create_cfg ?(output = Output.Stderr)
@@ -171,15 +171,15 @@ let init ?(template = default_template) output =
     match output with
     | Stderr ->
         Lwt.return
-        @@ Lwt_log.channel ~template ~close_mode:`Keep ~channel:Lwt_io.stderr ()
+        @@ Tz_log_core_lwt.Lwt_log_tz.channel ~template ~close_mode:`Keep ~channel:Lwt_io.stderr ()
     | Stdout ->
         Lwt.return
-        @@ Lwt_log.channel ~template ~close_mode:`Keep ~channel:Lwt_io.stdout ()
-    | File file_name -> Lwt_log.file ~file_name ~template ()
-    | Null -> Lwt.return @@ Lwt_log.null
-    | Syslog facility -> Lwt.return @@ Lwt_log.syslog ~template ~facility ()
+        @@ Tz_log_core_lwt.Lwt_log_tz.channel ~template ~close_mode:`Keep ~channel:Lwt_io.stdout ()
+    | File file_name -> Tz_log_core_lwt.Lwt_log_tz.file ~file_name ~template ()
+    | Null -> Lwt.return @@ Tz_log_core_lwt.Lwt_log_tz.null
+    | Syslog facility -> Lwt.return @@ Tz_log_core_lwt.Lwt_log_tz.syslog ~template ~facility ()
   in
-  Lwt_log.default := logger ;
+  Tz_log_core_lwt.Lwt_log_tz.default := logger ;
   Lwt.return_unit
 
 let find_log_rules default =
@@ -195,7 +195,7 @@ let find_log_rules default =
       ("environment variable TEZOS_LOG", Some rules)
 
 let initialize ?(cfg = default_cfg) () =
-  Lwt_log_core.add_rule "*" (Internal_event.Level.to_lwt_log cfg.default_level) ;
+  Tz_log_core.Log_core.add_rule "*" (Internal_event.Level.to_lc_level cfg.default_level) ;
   let (origin, rules) = find_log_rules cfg.rules in
   let* () =
     match rules with

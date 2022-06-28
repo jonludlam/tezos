@@ -25,6 +25,7 @@
 (*****************************************************************************)
 
 open Error_monad
+open Tz_log_core
 
 module List = struct
   include List
@@ -53,7 +54,7 @@ let check_name_exn : string -> (string -> char -> exn) -> unit =
 (* Levels are declared from the lowest to the highest so that
    polymorphic comparison can be used to check whether a message
    should be printed. *)
-type level = Lwt_log_core.level =
+type level = Log_core.level =
   | Debug
   | Info
   | Notice
@@ -62,7 +63,7 @@ type level = Lwt_log_core.level =
   | Fatal
 
 let should_log ~level ~sink_level =
-  (* Same criteria as [Lwt_log_core.log] *)
+  (* Same criteria as [Log_core.log] *)
   level >= sink_level
 
 module Level = struct
@@ -70,11 +71,11 @@ module Level = struct
 
   let default = Info
 
-  let to_lwt_log t = t
+  let to_lc_level t = t
 
-  let to_string = Lwt_log_core.string_of_level
+  let to_string = Log_core.string_of_level
 
-  let of_string = Lwt_log_core.level_of_string
+  let of_string = Log_core.level_of_string
 
   let encoding =
     let open Data_encoding in
@@ -101,7 +102,7 @@ module Section : sig
 
   val make_sanitized : string list -> t
 
-  val to_lwt_log : t -> Lwt_log_core.section
+  val to_lc_section : t -> Log_core.section
 
   val is_prefix : prefix:t -> t -> bool
 
@@ -113,7 +114,7 @@ module Section : sig
 
   val equal : t -> t -> bool
 end = struct
-  type t = {path : string list; lwt_log_section : Lwt_log_core.section}
+  type t = {path : string list; log_core_section : Log_core.section}
 
   include Compare.Make (struct
     type nonrec t = t
@@ -121,7 +122,7 @@ end = struct
     let compare = Stdlib.compare
   end)
 
-  let empty = {path = []; lwt_log_section = Lwt_log_core.Section.make ""}
+  let empty = {path = []; log_core_section = Log_core.Section.make ""}
 
   let make sl =
     List.iter
@@ -135,7 +136,7 @@ end = struct
       sl ;
     {
       path = sl;
-      lwt_log_section = Lwt_log_core.Section.make (String.concat "." sl);
+      log_core_section = Log_core.Section.make (String.concat "." sl);
     }
 
   let make_sanitized sl =
@@ -143,7 +144,7 @@ end = struct
 
   let to_string_list s = s.path
 
-  let to_lwt_log s = s.lwt_log_section
+  let to_lc_section s = s.log_core_section
 
   let is_prefix ~prefix main =
     try
@@ -173,7 +174,7 @@ let get_registered_sections () = String.Set.to_seq !registered_sections
 let register_section section =
   registered_sections :=
     String.Set.add
-      (Lwt_log_core.Section.name (Section.to_lwt_log section))
+      (Log_core.Section.name (Section.to_lc_section section))
       !registered_sections
 
 module type EVENT_DEFINITION = sig
@@ -1363,6 +1364,8 @@ module Legacy_logging = struct
   end
 end
 
+open Tz_log_core_lwt
+
 module Error_event = struct
   type t = {
     message : string option;
@@ -1421,7 +1424,7 @@ module Error_event = struct
         | Ok () -> Lwt.return_unit
         | Error el ->
             Format.kasprintf
-              Lwt_log_core.error
+              Lwt_log_tz.error
               "Error while emitting error logging event !! %a"
               pp_print_trace
               el)
@@ -1547,7 +1550,7 @@ end
 module Lwt_log_sink = struct
   (* let default_template = "$(date) - $(section): $(message)" *)
 
-  let default_section = Lwt_log_core.Section.main
+  let default_section = Log_core.Section.main
 
   module Sink : SINK = struct
     type t = unit
@@ -1563,14 +1566,14 @@ module Lwt_log_sink = struct
           let ev = v () in
           let level = M.level ev in
           let section =
-            Option.fold ~some:Section.to_lwt_log section ~none:default_section
+            Option.fold ~some:Section.to_lc_section section ~none:default_section
           in
           (* Only call printf if the event is to be printed. *)
-          if should_log ~level ~sink_level:(Lwt_log_core.Section.level section)
+          if should_log ~level ~sink_level:(Log_core.Section.level section)
           then
             let* () =
               Format.kasprintf
-                (Lwt_log_core.log ~section ~level)
+                (Lwt_log_tz.log ~section ~level)
                 "%a"
                 (M.pp ~short:false)
                 ev
@@ -1580,7 +1583,7 @@ module Lwt_log_sink = struct
 
     let close _ =
       let open Lwt_syntax in
-      let* () = Lwt_log_core.close !Lwt_log_core.default in
+      let* () = Lwt_log_tz.close !Lwt_log_tz.default in
       return_ok_unit
   end
 
