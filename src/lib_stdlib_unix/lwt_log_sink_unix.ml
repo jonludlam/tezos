@@ -31,7 +31,7 @@ module Output = struct
     | Stdout
     | Stderr
     | File of string
-    | Syslog of Tz_log_core_lwt.Lwt_log_tz.syslog_facility
+    | Syslog of Tz_log_core_unix.Lwt_log.syslog_facility
 
   let to_string : t -> string = function
     | Null -> "/dev/null"
@@ -116,7 +116,7 @@ type cfg = {
   output : Output.t;
   default_level : Internal_event.level;
   rules : string option;
-  template : Tz_log_core.Log_core.template;
+  template : Tz_log_core_unix.Lwt_log.template;
 }
 
 let create_cfg ?(output = Output.Stderr)
@@ -171,15 +171,15 @@ let init ?(template = default_template) output =
     match output with
     | Stderr ->
         Lwt.return
-        @@ Tz_log_core_lwt.Lwt_log_tz.channel ~template ~close_mode:`Keep ~channel:Lwt_io.stderr ()
+        @@ Tz_log_core_unix.Lwt_log.channel ~template ~close_mode:`Keep ~channel:Lwt_io.stderr ()
     | Stdout ->
         Lwt.return
-        @@ Tz_log_core_lwt.Lwt_log_tz.channel ~template ~close_mode:`Keep ~channel:Lwt_io.stdout ()
-    | File file_name -> Tz_log_core_lwt.Lwt_log_tz.file ~file_name ~template ()
-    | Null -> Lwt.return @@ Tz_log_core_lwt.Lwt_log_tz.null
-    | Syslog facility -> Lwt.return @@ Tz_log_core_lwt.Lwt_log_tz.syslog ~template ~facility ()
+        @@ Tz_log_core_unix.Lwt_log.channel ~template ~close_mode:`Keep ~channel:Lwt_io.stdout ()
+    | File file_name -> Tz_log_core_unix.Lwt_log.file ~file_name ~template ()
+    | Null -> Lwt.return @@ Tz_log_core_unix.Lwt_log.null
+    | Syslog facility -> Lwt.return @@ Tz_log_core_unix.Lwt_log.syslog ~template ~facility ()
   in
-  Tz_log_core_lwt.Lwt_log_tz.default := logger ;
+  Tz_log_core_unix.Lwt_log.default := logger ;
   Lwt.return_unit
 
 let find_log_rules default =
@@ -202,7 +202,7 @@ let initialize ?(cfg = default_cfg) () =
     | None -> Lwt.return_unit
     | Some rules -> (
         try
-          Lwt_log_core.load_rules rules ~fail_on_error:true ;
+          Tz_log_core.Log_core.load_rules rules ~fail_on_error:true ;
           Lwt.return_unit
         with _ ->
           Printf.ksprintf

@@ -29,7 +29,7 @@ module Output : sig
     | Stdout
     | Stderr
     | File of string
-    | Syslog of Tz_log_core_lwt.Lwt_log_tz.syslog_facility
+    | Syslog of Tz_log_core_unix.Lwt_log.syslog_facility
 
   val encoding : t Data_encoding.t
 
@@ -44,7 +44,7 @@ type cfg = {
   output : Output.t;
   default_level : Internal_event.level;
   rules : string option;
-  template : Tz_log_core.Log_core.template;
+  template : Tz_log_core_lwt.Lwt_log_tz.template;
 }
 
 val default_cfg : cfg
@@ -53,7 +53,7 @@ val create_cfg :
   ?output:Output.t ->
   ?default_level:Internal_event.level ->
   ?rules:string ->
-  ?template:Tz_log_core.Log_core.template ->
+  ?template:Tz_log_core_lwt.Lwt_log_tz.template ->
   unit ->
   cfg
 

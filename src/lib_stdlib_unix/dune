@@ -11,6 +11,8 @@
   tezos-error-monad
   tezos-lwt-result-stdlib
   tezos-event-logging
+  tezos-event-logging.lwt
+  tezos-event-logging.unix
   tezos-stdlib
   data-encoding
   lwt.unix

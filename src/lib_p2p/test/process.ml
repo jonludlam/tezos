@@ -24,22 +24,25 @@
 (*                                                                           *)
 (*****************************************************************************)
 
+open Tz_log_core
+open Tz_log_core_unix
+
 open Error_monad
 
 let () = Lwt_unix.set_default_async_method Async_none [@@ocaml.warning "-3"]
 
-let section = Lwt_log.Section.make "process"
+let section = Log_core.Section.make "process"
 
 let log_f ~level format =
-  if level < Lwt_log.Section.level section then
+  if level < Log_core.Section.level section then
     Format.ikfprintf (fun _ -> Lwt.return_unit) Format.std_formatter format
   else Format.kasprintf (fun msg -> Lwt_log.log ~section ~level msg) format
 
-let lwt_log_notice fmt = log_f ~level:Lwt_log.Notice fmt
+let lwt_log_notice fmt = log_f ~level:Log_core.Notice fmt
 
-let lwt_log_info fmt = log_f ~level:Lwt_log.Info fmt
+let lwt_log_info fmt = log_f ~level:Log_core.Info fmt
 
-let lwt_log_error fmt = log_f ~level:Lwt_log.Error fmt
+let lwt_log_error fmt = log_f ~level:Log_core.Error fmt
 
 exception Exited of int
 
