@@ -26,7 +26,7 @@
 (** A mock event sink that records handled events for verifying test
    expectations. *)
 
-include Internal_event.SINK
+include Internal_event.LWT_SINK
 
 (** A [filter] can be applied when asserting the contents of the sink. This
     restricts assertions to events from a specific section or to those that

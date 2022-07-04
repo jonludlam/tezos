@@ -193,7 +193,7 @@ module type EVENT_DEFINITION = sig
   val level : t -> level
 end
 
-module type EVENT = sig
+module type LWT_EVENT = sig
   include EVENT_DEFINITION
 
   val emit : ?section:Section.t -> (unit -> t) -> unit tzresult Lwt.t
@@ -201,7 +201,7 @@ end
 
 type 'a event_definition = (module EVENT_DEFINITION with type t = 'a)
 
-module type SINK = sig
+module type LWT_SINK = sig
   type t
 
   val uri_scheme : string
@@ -218,13 +218,13 @@ module type SINK = sig
   val close : t -> unit tzresult Lwt.t
 end
 
-type 'a sink_definition = (module SINK with type t = 'a)
+type 'a lwt_sink_definition = (module LWT_SINK with type t = 'a)
 
 module All_sinks = struct
   type registered =
     | Registered : {
         scheme : string;
-        definition : 'a sink_definition;
+        definition : 'a lwt_sink_definition;
       }
         -> registered
 
@@ -233,7 +233,7 @@ module All_sinks = struct
         scheme : string;
         configuration : Uri.t;
         sink : 'a;
-        definition : 'a sink_definition;
+        definition : 'a lwt_sink_definition;
       }
         -> active
 
@@ -247,7 +247,7 @@ module All_sinks = struct
       !registered
 
   let register (type a) m =
-    let module S = (val m : SINK with type t = a) in
+    let module S = (val m : LWT_SINK with type t = a) in
     match find_registered S.uri_scheme with
     | None ->
         registered :=
@@ -267,7 +267,7 @@ module All_sinks = struct
 
   let () =
     let description =
-      "Activation of an Internal Event SINK with an URI failed"
+      "Activation of an Internal Event LWT_SINK with an URI failed"
     in
     let title = "Internal Event Sink: Wrong Activation URI" in
     register_error_kind
@@ -314,7 +314,7 @@ module All_sinks = struct
           | Some (Registered {scheme; definition}) ->
               (* We need the intermediate function to introduce the type *)
               let activate (type a) scheme definition =
-                let module S = (val definition : SINK with type t = a) in
+                let module S = (val definition : LWT_SINK with type t = a) in
                 let* sink = S.configure uri in
                 return (Active {scheme; configuration = uri; definition; sink})
               in
@@ -325,9 +325,9 @@ module All_sinks = struct
 
   let close ?(except = fun _ -> false) () =
     let open Lwt_syntax in
-    let close_one (type a) sink definition =
-      let module S = (val definition : SINK with type t = a) in
-      S.close sink
+    let close_one (type a) lwt_sink definition =
+      let module S = (val definition : LWT_SINK with type t = a) in
+      S.close lwt_sink
     in
     (* We want to filter the list in one Lwt-go (atomically), and only then
        call close on the ones that are being deleted. *)
@@ -349,7 +349,7 @@ module All_sinks = struct
 
   let handle def section v =
     let handle (type a) sink definition =
-      let module S = (val definition : SINK with type t = a) in
+      let module S = (val definition : LWT_SINK with type t = a) in
       S.handle ?section sink def v
     in
     List.iter_es
@@ -473,7 +473,7 @@ module All_definitions = struct
     List.find (function Definition (_, n, _) -> match_name n) !all
 end
 
-module Make (E : EVENT_DEFINITION) : EVENT with type t = E.t = struct
+module Make (E : EVENT_DEFINITION) : LWT_EVENT with type t = E.t = struct
   include E
 
   let emit ?section x =
@@ -1411,7 +1411,7 @@ module Error_event = struct
       match severity with `Fatal -> Fatal | `Recoverable -> Error
   end
 
-  include (Make (Definition) : EVENT with type t := t)
+  include (Make (Definition) : LWT_EVENT with type t := t)
 
   let log_error_and_recover ?section ?message ?severity f =
     let open Lwt_syntax in
@@ -1461,7 +1461,7 @@ module Debug_event = struct
     let level _ = Debug
   end
 
-  include (Make (Definition) : EVENT with type t := t)
+  include (Make (Definition) : LWT_EVENT with type t := t)
 end
 
 module Lwt_worker_event = struct
@@ -1528,7 +1528,7 @@ module Lwt_worker_event = struct
       match event with `Failed _ -> Error | `Started | `Ended -> Debug
   end
 
-  include (Make (Definition) : EVENT with type t := t)
+  include (Make (Definition) : LWT_EVENT with type t := t)
 
   let on_event name event =
     let section = Section.make_sanitized ["lwt-worker"; name] in
@@ -1552,7 +1552,7 @@ module Lwt_log_sink = struct
 
   let default_section = Log_core.Section.main
 
-  module Sink : SINK = struct
+  module Sink : LWT_SINK = struct
     type t = unit
 
     let uri_scheme = "lwt-log"

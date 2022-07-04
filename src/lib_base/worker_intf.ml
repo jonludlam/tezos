@@ -112,5 +112,5 @@ module type LOGGER = sig
 
   type t = status Time.System.stamped
 
-  module LogEvent : Internal_event.EVENT with type t = t
+  module LogEvent : Internal_event.LWT_EVENT with type t = t
 end

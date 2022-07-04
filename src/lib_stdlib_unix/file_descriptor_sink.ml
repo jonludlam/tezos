@@ -67,7 +67,7 @@ let wrapped_encoding event_encoding =
 
 module Make_sink (K : sig
   val kind : [`Path | `Stdout | `Stderr]
-end) : Internal_event.SINK with type t = t = struct
+end) : Internal_event.LWT_SINK with type t = t = struct
   type nonrec t = t
 
   let uri_scheme =

@@ -55,8 +55,8 @@ let tztest_qcheck ?count ~name generator f =
   in
   Alcotest_lwt.test_case name speed (fun _sw () -> Lwt.return @@ run ())
 
-let mock_sink : Mock_sink.t Internal_event.sink_definition =
-  (module Mock_sink : Internal_event.SINK with type t = Mock_sink.t)
+let mock_sink : Mock_sink.t Internal_event.lwt_sink_definition =
+  (module Mock_sink : Internal_event.LWT_SINK with type t = Mock_sink.t)
 
 (** [with_empty_mock_sink f] executes f after activating or clearing a Mock_sink
     sink.

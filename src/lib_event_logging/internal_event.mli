@@ -127,7 +127,7 @@ module type EVENT_DEFINITION = sig
 end
 
 (** Events created with {!Make} provide the {!EVENT} API. *)
-module type EVENT = sig
+module type LWT_EVENT = sig
   include EVENT_DEFINITION
 
   (** Output an event of type {!t}, if no sinks are listening the
@@ -136,7 +136,7 @@ module type EVENT = sig
 end
 
 (** Build an event from an event-definition. *)
-module Make (E : EVENT_DEFINITION) : EVENT with type t = E.t
+module Make (E : EVENT_DEFINITION) : LWT_EVENT with type t = E.t
 
 (** [event_definition] wraps {!EVENT_DEFINITION} as a first class module. *)
 type 'a event_definition = (module EVENT_DEFINITION with type t = 'a)
@@ -405,7 +405,7 @@ end
 (** An implementation of {!SINK} is responsible for handling/storing
     events, for instance, a sink could be output to a file, to a
     database, or a simple "memory-less" forwarding mechanism.  *)
-module type SINK = sig
+module type LWT_SINK = sig
   (** A sink can store any required state, e.g. a database handle, in
       a value of the [t] type see {!configure}. *)
   type t
@@ -434,7 +434,7 @@ module type SINK = sig
 end
 
 (** [sink_definition] wraps {!SINK_DEFINITION} as a first class module. *)
-type 'a sink_definition = (module SINK with type t = 'a)
+type 'a lwt_sink_definition = (module LWT_SINK with type t = 'a)
 
 (** Use {!All_sinks.register} to add a new {i inactive} sink, then
     {!All_sinks.activate} to make it handle events. *)
@@ -442,7 +442,7 @@ module All_sinks : sig
   (** Register a new sink (e.g.
       [let () = Internal_event.All_sinks.register (module Sink_implementation)])
       for it to be available (but inactive) in the framework. *)
-  val register : 'a sink_definition -> unit
+  val register : 'a lwt_sink_definition -> unit
 
   (** Make a registered sink active: the function finds it by URI
       scheme and calls {!configure}. *)
@@ -478,7 +478,7 @@ module Error_event : sig
     unit ->
     t
 
-  include EVENT with type t := t
+  include LWT_EVENT with type t := t
 
   (** [log_error_and_recover f] calls [f ()] and emits an {!Error_event.t}
         event if it results in an error. It then continues in the [_ Lwt.t]
@@ -498,14 +498,14 @@ module Debug_event : sig
 
   val make : ?attach:Data_encoding.Json.t -> string -> unit -> t
 
-  include EVENT with type t := t
+  include LWT_EVENT with type t := t
 end
 
 (** The worker event is meant for use with {!Lwt_utils.worker}. *)
 module Lwt_worker_event : sig
   type t = {name : string; event : [`Ended | `Failed of string | `Started]}
 
-  include EVENT with type t := t
+  include LWT_EVENT with type t := t
 
   (** [on_event msg status] emits an event of type [t] and matches
         the signature required by {!Lwt_utils.worker}.  *)
@@ -591,7 +591,7 @@ module Legacy_logging : sig
        val name : string
      end)
     -> sig
-    module Event : EVENT
+    module Event : LWT_EVENT
 
     include LOG
   end
@@ -601,7 +601,7 @@ module Legacy_logging : sig
        val name : string
      end)
     -> sig
-    module Event : EVENT
+    module Event : LWT_EVENT
 
     include SEMLOG
   end

@@ -177,6 +177,6 @@ struct
       | Duplicate _ -> Internal_event.Error
   end
 
-  module LogEvent : Internal_event.EVENT with type t = t =
+  module LogEvent : Internal_event.LWT_EVENT with type t = t =
     Internal_event.Make (Definition)
 end

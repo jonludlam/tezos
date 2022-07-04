@@ -76,8 +76,8 @@
 
 type t
 
-module Sink_implementation_path : Internal_event.SINK with type t = t
+module Sink_implementation_path : Internal_event.LWT_SINK with type t = t
 
-module Sink_implementation_stdout : Internal_event.SINK with type t = t
+module Sink_implementation_stdout : Internal_event.LWT_SINK with type t = t
 
-module Sink_implementation_stderr : Internal_event.SINK with type t = t
+module Sink_implementation_stderr : Internal_event.LWT_SINK with type t = t

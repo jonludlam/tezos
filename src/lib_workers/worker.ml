@@ -286,7 +286,7 @@ struct
     mutable status : Worker_types.worker_status;
     mutable current_request :
       (Time.System.t * Time.System.t * Request.view) option;
-    logEvent : (module Internal_event.EVENT with type t = Logger.t);
+    logEvent : (module Internal_event.LWT_EVENT with type t = Logger.t);
     table : 'kind table;
   }
 

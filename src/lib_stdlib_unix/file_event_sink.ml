@@ -202,7 +202,7 @@ module Section_dir = struct
         | Some s -> Ok (Some s))
 end
 
-module Sink_implementation : Internal_event.SINK with type t = t = struct
+module Sink_implementation : Internal_event.LWT_SINK with type t = t = struct
   type nonrec t = t
 
   let uri_scheme = "unix-files"
