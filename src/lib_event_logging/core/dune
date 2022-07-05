@@ -2,4 +2,8 @@
 
 (library
  (name tz_log_core)
- (public_name tezos-event-logging.core))
+ (public_name tezos-event-logging.core)
+ (libraries   data-encoding tezos-stdlib   tezos-error-monad   tezos-lwt-result-stdlib
+
+
+))

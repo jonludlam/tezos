@@ -685,7 +685,7 @@ module Manpage = struct
     let log_sections =
       String.concat
         " "
-        (List.of_seq (Internal_event.get_registered_sections ()))
+        (List.of_seq (Tz_log_core.Internal_event_core.get_registered_sections ()))
     in
     [
       `S "DEBUG";
