@@ -24,14 +24,15 @@
 (*****************************************************************************)
 
 open Error_monad
+open Tz_log_core
 
-type filter = Internal_event.Section.t option
+type filter = Internal_event_core.Section.t option
 
 type t = unit
 
 type event = {
-  level : Internal_event.Level.t;
-  section : Internal_event.Section.t option;
+  level : Internal_event_core.Level.t;
+  section : Internal_event_core.Section.t option;
   name : string;
   message : string;
   json : Data_encoding.json;
@@ -41,20 +42,20 @@ let pp_event ?(short = false) fmt e =
   Format.fprintf
     fmt
     "Event[%s](%a:%s)"
-    (Internal_event.Level.to_string e.level)
+    (Internal_event_core.Level.to_string e.level)
     Format.(
       pp_print_option
       @@ pp_print_list
            ~pp_sep:(fun fmt () -> pp_print_string fmt ":")
            pp_print_string)
-    (Option.map Internal_event.Section.to_string_list e.section)
+    (Option.map Internal_event_core.Section.to_string_list e.section)
     e.name ;
   if not short then Format.fprintf fmt " %a" Data_encoding.Json.pp e.json
 
 module Pattern = struct
   type t = {
-    level : Internal_event.level option;
-    section : Internal_event.Section.t option option;
+    level : Internal_event_core.level option;
+    section : Internal_event_core.Section.t option option;
     name : string;
   }
 
@@ -63,7 +64,7 @@ module Pattern = struct
       fmt
       "Pattern[%a](%a:%s)"
       Format.(pp_print_option pp_print_string)
-      (Option.map Internal_event.Level.to_string pattern.level)
+      (Option.map Internal_event_core.Level.to_string pattern.level)
       Format.(
         pp_print_option ~none:(fun fmt () -> pp_print_string fmt "<ANY>")
         @@ pp_print_option
@@ -71,7 +72,7 @@ module Pattern = struct
              ~pp_sep:(fun fmt () -> pp_print_string fmt ":")
              pp_print_string)
       (Option.map
-         (Option.map Internal_event.Section.to_string_list)
+         (Option.map Internal_event_core.Section.to_string_list)
          pattern.section)
       pattern.name
 
@@ -112,7 +113,7 @@ let is_activated () = !activated
 let close (_ : t) : unit tzresult Lwt.t = Lwt_result_syntax.return_unit
 
 let handle (type a) (_ : t) m ?section (f : unit -> a) =
-  let module M = (val m : Internal_event.EVENT_DEFINITION with type t = a) in
+  let module M = (val m : Internal_event_core.EVENT_DEFINITION with type t = a) in
   let ev = f () in
   let event =
     {
@@ -145,9 +146,9 @@ let pp_state ?filter () =
       let section_pp =
         match section with
         | None -> "[~]"
-        | Some section -> Format.asprintf "%a" Internal_event.Section.pp section
+        | Some section -> Format.asprintf "%a" Internal_event_core.Section.pp section
       in
-      let lvl_pp = Internal_event.Level.to_string lvl in
+      let lvl_pp = Internal_event_core.Level.to_string lvl in
       Format.printf
         "Registered event{%d}:\n   %s (%s): \"%s\"\n"
         i
@@ -163,15 +164,15 @@ let pp_events_json =
       ~pp_sep:(fun fmt () -> pp_print_string fmt ";\n")
       (fun fmt {json; _} -> Data_encoding.Json.pp fmt json))
 
-let testable_level : Internal_event.Level.t Alcotest.testable =
+let testable_level : Internal_event_core.Level.t Alcotest.testable =
   let level_pp fmt level =
-    Format.pp_print_string fmt (Internal_event.Level.to_string level)
+    Format.pp_print_string fmt (Internal_event_core.Level.to_string level)
   in
-  let level_eq l1 l2 = 0 == Internal_event.Level.compare l1 l2 in
+  let level_eq l1 l2 = 0 == Internal_event_core.Level.compare l1 l2 in
   Alcotest.testable level_pp level_eq
 
-let testable_section : Internal_event.Section.t Alcotest.testable =
-  Alcotest.of_pp Internal_event.Section.pp
+let testable_section : Internal_event_core.Section.t Alcotest.testable =
+  Alcotest.of_pp Internal_event_core.Section.pp
 
 let testable_event : event Alcotest.testable =
   (module struct
@@ -185,10 +186,10 @@ let testable_event : event Alcotest.testable =
       Format.fprintf
         fmt
         "(%s, %a, %a)"
-        (Internal_event.Level.to_string event.level)
+        (Internal_event_core.Level.to_string event.level)
         Format.(pp_print_list pp_print_string)
         (Option.fold
-           ~some:Internal_event.Section.to_string_list
+           ~some:Internal_event_core.Section.to_string_list
            ~none:[]
            event.section)
         Data_encoding.Json.pp

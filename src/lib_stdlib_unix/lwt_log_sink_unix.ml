@@ -114,13 +114,13 @@ let default_template = "$(date).$(milliseconds) - $(section): $(message)"
 
 type cfg = {
   output : Output.t;
-  default_level : Internal_event.level;
+  default_level : Internal_event_core.level;
   rules : string option;
   template : Tz_log_core_unix.Lwt_log.template;
 }
 
 let create_cfg ?(output = Output.Stderr)
-    ?(default_level = Internal_event.Notice) ?rules
+    ?(default_level = Internal_event_core.Notice) ?rules
     ?(template = default_template) () =
   {output; default_level; rules; template}
 
@@ -146,7 +146,7 @@ let cfg_encoding =
           ~description:
             "Verbosity level: one of 'fatal', 'error', 'warn','notice', \
              'info', 'debug'."
-          Internal_event.Level.encoding
+          Internal_event_core.Level.encoding
           default_cfg.default_level)
        (opt
           "rules"

@@ -23,6 +23,8 @@
 (*                                                                           *)
 (*****************************************************************************)
 
+open Tz_log_core
+
 module Output : sig
   type t =
     | Null
@@ -42,7 +44,7 @@ end
 
 type cfg = {
   output : Output.t;
-  default_level : Internal_event.level;
+  default_level : Internal_event_core.level;
   rules : string option;
   template : Tz_log_core_lwt.Lwt_log_tz.template;
 }
@@ -51,7 +53,7 @@ val default_cfg : cfg
 
 val create_cfg :
   ?output:Output.t ->
-  ?default_level:Internal_event.level ->
+  ?default_level:Internal_event_core.level ->
   ?rules:string ->
   ?template:Tz_log_core_lwt.Lwt_log_tz.template ->
   unit ->

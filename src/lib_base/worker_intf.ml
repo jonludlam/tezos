@@ -27,6 +27,7 @@
 (** {2 Parameters to build a worker group} *)
 
 open Error_monad
+open Tz_log_core
 
 (** The name of the group of workers corresponding to an instantiation
     of {!Make}, as well as the name of each worker in that group. *)
@@ -67,7 +68,7 @@ module type EVENT = sig
       Events can be ignored for logging w.r.t. the global node configuration.
       Events can be ignored for introspection w.r.t. to the worker's
       {!Worker_types.limits}. *)
-  val level : t -> Internal_event.level
+  val level : t -> Internal_event_core.level
 end
 
 (** The type of messages that are fed to the worker's event loop. *)
@@ -100,7 +101,7 @@ module type LOGGER = sig
   module Request : VIEW
 
   type status =
-    | WorkerEvent of (Event.t * Internal_event.level)
+    | WorkerEvent of (Event.t * Internal_event_core.level)
     | Request of
         (Request.view * Worker_types.request_status * error list option)
     | Terminated

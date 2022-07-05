@@ -23,10 +23,12 @@
 (*                                                                           *)
 (*****************************************************************************)
 
-let section = Internal_event.Section.make_sanitized ["rpc"]
+open Tz_log_core
+
+let section = Internal_event_core.Section.make_sanitized ["rpc"]
 
 module Event_def = struct
-  type t = {level : Internal_event.level; message : string}
+  type t = {level : Internal_event_core.level; message : string}
 
   let name = "rpc_http_event"
 
@@ -36,8 +38,8 @@ module Event_def = struct
 
   let encoding =
     let open Data_encoding in
-    let enc : (Internal_event.level * string) encoding =
-      obj2 (req "level" Internal_event.Level.encoding) (req "message" string)
+    let enc : (Internal_event_core.level * string) encoding =
+      obj2 (req "level" Internal_event_core.Level.encoding) (req "message" string)
     in
     conv
       (fun t -> (t.level, t.message))
@@ -65,9 +67,9 @@ let wrap_lwt f a = Lwt.dont_wait (fun () -> f a) raise
 (** Avoid calling emit, if sinks would ignore the message anyway. *)
 let if_level_appropriate_or_else ~level if_so if_not fmt =
   let lwt_level =
-    Tz_log_core.Log_core.Section.level @@ Internal_event.Section.to_lc_section section
+    Tz_log_core.Log_core.Section.level @@ Internal_event_core.Section.to_lc_section section
   in
-  if Internal_event.Level.to_lc_level level >= lwt_level then if_so fmt
+  if Internal_event_core.Level.to_lc_level level >= lwt_level then if_so fmt
   else if_not fmt
 
 let log level fmt =

@@ -22,6 +22,7 @@
 (* DEALINGS IN THE SOFTWARE.                                                 *)
 (*                                                                           *)
 (*****************************************************************************)
+open Tz_log_core
 
 module Request : sig
   type validation_view = {
@@ -65,7 +66,7 @@ module Event : sig
 
   val view : view -> t
 
-  val level : t -> Internal_event.level
+  val level : t -> Internal_event_core.level
 
   val encoding : t Data_encoding.encoding
 

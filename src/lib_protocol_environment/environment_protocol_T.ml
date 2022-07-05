@@ -25,6 +25,7 @@
 (*****************************************************************************)
 
 open Environment_context
+open Tz_log_core
 
 (* This module contains the real module signature of an economic
    protocol that the Shell sees. There is actually only one signature
@@ -56,7 +57,7 @@ module type T = sig
   include Environment_protocol_T_V3.T
 
   val set_log_message_consumer :
-    (Internal_event.level -> string -> unit) -> unit
+    (Internal_event_core.level -> string -> unit) -> unit
 
   val environment_version : Protocol.env_version
 end

@@ -23,6 +23,8 @@
 (*                                                                           *)
 (*****************************************************************************)
 
+open Tz_log_core
+
 type attempt_event = {attempt : int; delay : float; text : string}
 
 module Attempt_logging = Internal_event.Make (struct
@@ -51,7 +53,7 @@ module Attempt_logging = Internal_event.Make (struct
       delay
       text
 
-  let level _ = Internal_event.Error
+  let level _ = Internal_event_core.Error
 end)
 
 module RetryClient : Cohttp_lwt.S.Client = struct

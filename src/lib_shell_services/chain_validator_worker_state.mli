@@ -72,7 +72,7 @@ module Event : sig
 
   val view : t -> view
 
-  val level : t -> Internal_event.level
+  val level : t -> Tz_log_core.Internal_event_core.level
 
   val encoding : t Data_encoding.encoding
 

@@ -26,6 +26,8 @@
 (** A mock event sink that records handled events for verifying test
    expectations. *)
 
+open Tz_log_core
+
 include Internal_event.LWT_SINK
 
 (** A [filter] can be applied when asserting the contents of the sink. This
@@ -37,11 +39,11 @@ include Internal_event.LWT_SINK
      Note that the filter is always passed as an optional parameter. It can be
      omited to keep all events.
 *)
-type filter = Internal_event.Section.t option
+type filter = Internal_event_core.Section.t option
 
 type event = {
-  level : Internal_event.Level.t;
-  section : Internal_event.Section.t option;
+  level : Internal_event_core.Level.t;
+  section : Internal_event_core.Section.t option;
   name : string;
   message : string;
   json : Data_encoding.json;
@@ -53,8 +55,8 @@ module Pattern : sig
       and optionally also for level and section. Passing None as each of
       these fields results in that field not being checked. *)
   type t = {
-    level : Internal_event.level option;
-    section : Internal_event.Section.t option option;
+    level : Internal_event_core.level option;
+    section : Internal_event_core.Section.t option option;
     name : string;
   }
 
@@ -99,6 +101,6 @@ val get_events : ?filter:filter -> unit -> event list
 
 val testable_event : event Alcotest.testable
 
-val testable_level : Internal_event.Level.t Alcotest.testable
+val testable_level : Internal_event_core.Level.t Alcotest.testable
 
-val testable_section : Internal_event.Section.t Alcotest.testable
+val testable_section : Internal_event_core.Section.t Alcotest.testable
