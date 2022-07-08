@@ -39,6 +39,7 @@ type level = Log_core.level =
 module Section = Section
 module Level = Level
 module type EVENT_DEFINITION = EVENT_DEFINITION
+module Generic = Generic
 
 module String = struct
   include String
@@ -52,7 +53,6 @@ module type LWT_EVENT = sig
   val emit : ?section:Section.t -> (unit -> t) -> unit tzresult Lwt.t
 end
 
-type 'a event_definition = (module EVENT_DEFINITION with type t = 'a)
 
 module type LWT_SINK = sig
   type t
@@ -244,87 +244,7 @@ module All_sinks = struct
     ()
 end
 
-module Generic = struct
-  type definition =
-    | Definition :
-        (Section.t option * string * 'a event_definition)
-        -> definition
 
-  type event = Event : (string * 'a event_definition * 'a) -> event
-
-  type with_name = < doc : string ; name : string >
-
-  let json_schema (Definition (_, _, d)) :
-      < schema : Json_schema.schema ; with_name > =
-    let aux (type a) (ev : a event_definition) =
-      let module E = (val ev : EVENT_DEFINITION with type t = a) in
-      object
-        method name = E.name
-
-        method doc = E.doc
-
-        method schema = Data_encoding.Json.schema E.encoding
-      end
-    in
-    aux d
-
-  let explode_event (Event (_, def, ev)) =
-    let aux (type a) def ev =
-      let module M = (val def : EVENT_DEFINITION with type t = a) in
-      object
-        method name = M.name
-
-        method doc = M.doc
-
-        method pp fmt () = M.pp ~short:false fmt ev
-
-        method json = Data_encoding.Json.construct M.encoding ev
-      end
-    in
-    aux def ev
-end
-
-module All_definitions = struct
-  open Generic
-
-  let all : definition list ref = ref []
-
-  let registration_exn fmt =
-    Format.kasprintf
-      (fun s ->
-        (* This should be considered a programming error: *)
-        Invalid_argument ("Internal_event registration error: " ^ s))
-      fmt
-
-  let add (type a) ev =
-    let module E = (val ev : EVENT_DEFINITION with type t = a) in
-    match
-      List.find
-        (function Definition (s, n, _) -> E.section = s && E.name = n)
-        !all
-    with
-    | Some _ ->
-        raise
-          (registration_exn
-             "duplicate Event name: %a %S"
-             (Format.pp_print_option (fun fmt ss ->
-                  Format.fprintf
-                    fmt
-                    "%s"
-                    (String.concat "." (Section.to_string_list ss))))
-             E.section
-             E.name)
-    | None ->
-        check_name_exn
-          E.name
-          (registration_exn "invalid event name: %S contains '%c'") ;
-        all := Definition (E.section, E.name, ev) :: !all
-
-  let get () = !all
-
-  let find match_name =
-    List.find (function Definition (_, n, _) -> match_name n) !all
-end
 
 module Make (E : EVENT_DEFINITION) : LWT_EVENT with type t = E.t = struct
   include E

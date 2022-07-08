@@ -92,7 +92,43 @@ open Tezos_stdlib
       (** Return the preferred {!level} for a given event instance. *)
       val level : t -> level
     end
+
+    type 'a event_definition = (module EVENT_DEFINITION with type t = 'a)
+
+    module Generic : sig
+      type definition =
+        | Definition :
+            (Section.t option * string * 'a event_definition)
+            -> definition
     
+      type event = Event : (string * 'a event_definition * 'a) -> event
+    
+      type with_name = < doc : string ; name : string >
+    
+      (** Get the JSON schema (together with [name] and [doc]) of a given
+          event definition. *)
+      val json_schema : definition -> < schema : Json_schema.schema ; with_name >
+    
+      (** Get the JSON representation and a pretty-printer for a given
+            event {i instance}. *)
+      val explode_event :
+        event ->
+        < pp : Format.formatter -> unit -> unit
+        ; json : Data_encoding.json
+        ; with_name >
+    end
+    
+    (** Access to all the event definitions registered with {!Make}. *)
+module All_definitions : sig
+  (** Get the list of all the known definitions. *)
+  val get : unit -> Generic.definition list
+
+  val add : 'a event_definition -> unit
+
+  (** Find the definition matching on the given name. *)
+  val find : (string -> bool) -> Generic.definition option
+end
+
     val check_name_exn : string -> (string -> char -> exn) -> unit
 
     val registered_sections : Tezos_error_monad.TzLwtreslib.Set.Make (String).t ref

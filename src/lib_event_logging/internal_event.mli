@@ -50,6 +50,7 @@ type level = Log_core.level =
 module Section = Section
 module Level = Level
 module type EVENT_DEFINITION = EVENT_DEFINITION
+module Generic = Generic
 
 (** Events created with {!Make} provide the {!EVENT} API. *)
 module type LWT_EVENT = sig
@@ -64,40 +65,10 @@ end
 module Make (E : EVENT_DEFINITION) : LWT_EVENT with type t = E.t
 
 (** [event_definition] wraps {!EVENT_DEFINITION} as a first class module. *)
-type 'a event_definition = (module EVENT_DEFINITION with type t = 'a)
+(* type 'a event_definition = (module EVENT_DEFINITION with type t = 'a) *)
 
 (** Helper functions to manipulate all kinds of events in a generic way. *)
-module Generic : sig
-  type definition =
-    | Definition :
-        (Section.t option * string * 'a event_definition)
-        -> definition
 
-  type event = Event : (string * 'a event_definition * 'a) -> event
-
-  type with_name = < doc : string ; name : string >
-
-  (** Get the JSON schema (together with [name] and [doc]) of a given
-      event definition. *)
-  val json_schema : definition -> < schema : Json_schema.schema ; with_name >
-
-  (** Get the JSON representation and a pretty-printer for a given
-        event {i instance}. *)
-  val explode_event :
-    event ->
-    < pp : Format.formatter -> unit -> unit
-    ; json : Data_encoding.json
-    ; with_name >
-end
-
-(** Access to all the event definitions registered with {!Make}. *)
-module All_definitions : sig
-  (** Get the list of all the known definitions. *)
-  val get : unit -> Generic.definition list
-
-  (** Find the definition matching on the given name. *)
-  val find : (string -> bool) -> Generic.definition option
-end
 
 module Simple : sig
   (** Simple Event Definition *)
